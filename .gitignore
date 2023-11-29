@@ -1,0 +1,19 @@
+.DS_Store
+node_modules
+.openzeppelin
+.env
+coverage
+coverage.json
+typechain
+typechain-types
+.idea
+.idea/
+.idea.*
+
+#Hardhat files
+cache
+artifacts
+
+#Foundry
+cache_forge/
+out/
