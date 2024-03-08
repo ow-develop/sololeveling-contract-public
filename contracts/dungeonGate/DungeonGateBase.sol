@@ -56,7 +56,7 @@ abstract contract DungeonGateBase is
     }
 
     struct GateReward {
-        uint256[7] rewardTokens;
+        uint256[8] rewardTokens;
     }
 
     struct MonsterReward {
@@ -72,7 +72,7 @@ abstract contract DungeonGateBase is
     struct RewardMintInfo {
         address hunter;
         uint256 signatureIndex;
-        uint256[7] rewardTokens;
+        uint256[8] rewardTokens;
         uint256 rewardCount;
     }
 
@@ -100,8 +100,9 @@ abstract contract DungeonGateBase is
      *     4 index = A rank monster reward count
      *     5 index = S rank monster reward count
      *     6 index = seasonPack reward count
+     *     7 index = essenceStone reward count
      */
-    mapping(RankType => uint256[7]) internal rewardTokensPerRank; // E - S
+    mapping(RankType => uint256[8]) internal rewardTokensPerRank; // E - S
 
     /// @notice gateId to Gate
     mapping(uint256 => Gate) internal gates;
@@ -111,8 +112,10 @@ abstract contract DungeonGateBase is
         internal gateOfHunterSlot;
 
     /// @notice seasonId to hunter to gate count
-    mapping(uint256 => mapping(address => CountersUpgradeable.Counter))
-        internal gateCountOfSeason;
+    mapping(uint256 => mapping(address => uint256)) internal gateCountOfSeason;
+
+    /// @notice RankType to required gate count for hunter rankUp
+    mapping(RankType => uint256) internal requiredGateCountForRankUp; // E-A
 
     /*
      *  Event
@@ -123,7 +126,9 @@ abstract contract DungeonGateBase is
         address indexed hunter,
         uint256 gateId,
         uint256 startBlock,
-        uint256 endBlock
+        uint256 endBlock,
+        bool isRankUp,
+        RankType nextHunterRank
     );
 
     event GateCleared(
@@ -135,6 +140,7 @@ abstract contract DungeonGateBase is
         bytes[] gateSignatures,
         MonsterReward monsterReward,
         SeasonPackReward seasonPackReward,
+        uint256 essenceStoneReward,
         uint256 timestamp
     );
 }

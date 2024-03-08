@@ -35,7 +35,7 @@ contract SLTestEssenceStone is
         string memory _baseTokenURI
     ) public initializer {
         __SLCotroller_init(_projectContract);
-        __MintController_init(_controllers); // dungeonGateContract, systemContract
+        __MintController_init(_controllers); // dungeonGateContract, systemContract, shopContract
         __ERC1155_init(_baseTokenURI);
         __essenceStone_init();
 
@@ -166,6 +166,22 @@ contract SLTestEssenceStone is
         }
 
         _mintBatch(_to, _tokenIds, _amounts, "");
+    }
+
+    function mintOfAirdrop(
+        address[] calldata _accounts,
+        uint256[] calldata _tokenIds,
+        uint256[] calldata _amounts
+    ) external onlyOperator {
+        for (uint256 i = 0; i < _tokenIds.length; i = i.increment()) {
+            if (!exists(_tokenIds[i])) {
+                revert DoesNotExistTokenId();
+            }
+
+            mintedSupplyOfToken[_tokenIds[i]] += _amounts[i];
+
+            _mint(_accounts[i], _tokenIds[i], _amounts[i], "");
+        }
     }
 
     /*

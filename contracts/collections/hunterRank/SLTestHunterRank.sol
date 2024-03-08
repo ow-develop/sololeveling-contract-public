@@ -32,7 +32,7 @@ contract SLTestHunterRank is
     )
         ERC1155(_baseTokenURI)
         SLController(_projectContract)
-        MintController(_controllers) // seasonContract
+        MintController(_controllers) // dungeonGateContract
     {
         mintEnabled = true;
     }

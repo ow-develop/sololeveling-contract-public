@@ -27,6 +27,7 @@ contract SLDungeonGate is Gate, UUPSUpgradeable {
         __gateBlockPerRank_init();
         __slotPerHunterRank_init();
         __rewardTokensPerRank_init();
+        __requiredGateCountForRankUp_init();
 
         seasonContract = _seasonContract;
         randomContract = _randomContract;
@@ -37,7 +38,7 @@ contract SLDungeonGate is Gate, UUPSUpgradeable {
         gateKeyCollectionId = _gateKeyCollectionId;
         normalMonsterCollectionId = _normalMonsterCollectionId;
 
-        boostBlockCount = 72;
+        boostBlockCount = 15;
 
         setApproveUSDTokenContract();
     }
@@ -45,12 +46,12 @@ contract SLDungeonGate is Gate, UUPSUpgradeable {
     function _authorizeUpgrade(address) internal override onlyOperatorMaster {}
 
     function __gateBlockPerRank_init() private {
-        gateBlockPerRank[RankType.E] = 24;
-        gateBlockPerRank[RankType.D] = 720;
-        gateBlockPerRank[RankType.C] = 1440;
-        gateBlockPerRank[RankType.B] = 2880;
-        gateBlockPerRank[RankType.A] = 5760;
-        gateBlockPerRank[RankType.S] = 11520;
+        gateBlockPerRank[RankType.E] = 5;
+        gateBlockPerRank[RankType.D] = 150;
+        gateBlockPerRank[RankType.C] = 300;
+        gateBlockPerRank[RankType.B] = 600;
+        gateBlockPerRank[RankType.A] = 1200;
+        gateBlockPerRank[RankType.S] = 2400;
     }
 
     function __slotPerHunterRank_init() private {
@@ -63,12 +64,20 @@ contract SLDungeonGate is Gate, UUPSUpgradeable {
     }
 
     function __rewardTokensPerRank_init() private {
-        rewardTokensPerRank[RankType.E] = [3, 0, 0, 0, 0, 0, 1]; // 4
-        rewardTokensPerRank[RankType.D] = [4, 2, 0, 0, 0, 0, 2]; // 8
-        rewardTokensPerRank[RankType.C] = [5, 3, 2, 0, 0, 0, 3]; // 13
-        rewardTokensPerRank[RankType.B] = [6, 4, 3, 2, 0, 0, 4]; // 19
-        rewardTokensPerRank[RankType.A] = [7, 5, 4, 3, 2, 0, 5]; // 26
-        rewardTokensPerRank[RankType.S] = [8, 6, 5, 4, 3, 2, 6]; // 34
+        rewardTokensPerRank[RankType.E] = [3, 0, 0, 0, 0, 0, 1, 2]; // 4
+        rewardTokensPerRank[RankType.D] = [4, 2, 0, 0, 0, 0, 2, 9]; // 8
+        rewardTokensPerRank[RankType.C] = [5, 3, 2, 0, 0, 0, 3, 28]; // 13
+        rewardTokensPerRank[RankType.B] = [6, 4, 3, 2, 0, 0, 4, 72]; // 19
+        rewardTokensPerRank[RankType.A] = [7, 5, 4, 3, 2, 0, 5, 160]; // 26
+        rewardTokensPerRank[RankType.S] = [8, 6, 5, 4, 3, 2, 6, 340]; // 34
+    }
+
+    function __requiredGateCountForRankUp_init() private {
+        requiredGateCountForRankUp[RankType.E] = 5;
+        requiredGateCountForRankUp[RankType.D] = 20;
+        requiredGateCountForRankUp[RankType.C] = 30;
+        requiredGateCountForRankUp[RankType.B] = 40;
+        requiredGateCountForRankUp[RankType.A] = 50;
     }
 
     /*

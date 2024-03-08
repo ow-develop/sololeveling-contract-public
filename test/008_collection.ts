@@ -17,7 +17,7 @@ const getSBTId = (address: string) => {
   );
   const hash = ethers.utils.keccak256(encodedParams);
   const hashNum = ethers.BigNumber.from(hash);
-  const maxUint64 = ethers.BigNumber.from("18446744073709551615");
+  const maxUint64 = ethers.BigNumber.from("4294967295");
   return hashNum.mod(maxUint64);
 };
 
@@ -99,13 +99,9 @@ describe("Collection", () => {
 
     // deploy season
     const SLSeason = await ethers.getContractFactory("SLSeason");
-    season = await upgrades.deployProxy(
-      SLSeason,
-      [project.address, monsterFactory.address, 1, 2],
-      {
-        kind: "uups",
-      }
-    );
+    season = await upgrades.deployProxy(SLSeason, [project.address], {
+      kind: "uups",
+    });
     await season.deployed();
     console.log(`Season deployed to: ${season.address}`);
 
@@ -939,6 +935,26 @@ describe("Collection", () => {
         hunterRank,
         "FunctionNotSupported"
       );
+    });
+
+    it("Mint Of Airdrop * 500", async () => {
+      const accounts = [];
+      const tokenIds = [];
+      const amounts = [];
+
+      for (let i = 0; i < 500; i++) {
+        const wallet = ethers.Wallet.createRandom();
+        accounts.push(wallet.address);
+        tokenIds.push(1);
+        amounts.push(1);
+      }
+
+      const mintTx = await essenceStone.mintOfAirdrop(
+        accounts,
+        tokenIds,
+        amounts
+      );
+      await mintTx.wait();
     });
   });
 

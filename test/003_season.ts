@@ -8,7 +8,7 @@ import {
   setNextBlockNumber,
 } from "../helpers/block-timestamp";
 import { RankType } from "../helpers/constant/contract";
-import { Create, HunterRankUp } from "../helpers/type/event";
+import { Create } from "../helpers/type/event";
 import { ZERO_ADDRESS } from "../helpers/constant/common";
 
 describe("Season", () => {
@@ -16,8 +16,7 @@ describe("Season", () => {
     operatorManager: SignerWithAddress,
     notOperator: SignerWithAddress,
     creator: SignerWithAddress,
-    hunter1: SignerWithAddress,
-    hunter2: SignerWithAddress;
+    hunter1: SignerWithAddress;
 
   let project: Contract,
     operator: Contract,
@@ -28,17 +27,16 @@ describe("Season", () => {
     hunterRank: Contract,
     seasonPack: Contract;
 
-  let CreateEvent: Create, HunterRankUpEvent: HunterRankUp;
+  let CreateEvent: Create;
 
-  let isShadow: boolean,
-    hunterRankCollectionId: number,
+  let hunterRankCollectionId: number,
     seasonPackCollectionId: number,
     latestSeasonEndBlock: number,
     beforeSeasonEndBlock: number,
     afterSeasonStartBlock: number;
 
   before(async () => {
-    [operatorMaster, operatorManager, notOperator, creator, hunter1, hunter2] =
+    [operatorMaster, operatorManager, notOperator, creator, hunter1] =
       await ethers.getSigners();
     console.log(
       "Deploying contracts with the account: " + operatorMaster.address
@@ -73,13 +71,9 @@ describe("Season", () => {
 
     // deploy season
     const SLSeason = await ethers.getContractFactory("SLSeason");
-    season = await upgrades.deployProxy(
-      SLSeason,
-      [project.address, monsterFactory.address, 1, 2],
-      {
-        kind: "uups",
-      }
-    );
+    season = await upgrades.deployProxy(SLSeason, [project.address], {
+      kind: "uups",
+    });
     await season.deployed();
     console.log(`Season deployed to: ${season.address}`);
 
@@ -176,22 +170,6 @@ describe("Season", () => {
   ////////////
 
   describe("Season", async () => {
-    it("Get Required Monster For RankUp", async () => {
-      const requiredMonsterForRankUp =
-        await season.getRequiredMonsterForRankUp();
-      const requiredNormalMonster = requiredMonsterForRankUp[0];
-      const requiredShadowMonster = requiredMonsterForRankUp[1];
-
-      expect(requiredNormalMonster[RankType.E]).to.equal(10);
-      expect(requiredNormalMonster[RankType.D]).to.equal(10);
-      expect(requiredNormalMonster[RankType.C]).to.equal(10);
-      expect(requiredNormalMonster[RankType.B]).to.equal(10);
-      expect(requiredNormalMonster[RankType.A]).to.equal(10);
-
-      expect(requiredShadowMonster[0]).to.equal(1);
-      expect(requiredShadowMonster[1]).to.equal(1);
-    });
-
     it("Add Season : Success", async () => {
       const currentBlockNumber = await getCurrentBlockNumber();
       latestSeasonEndBlock = currentBlockNumber + 1000;
@@ -882,478 +860,478 @@ describe("Season", () => {
   // RankUp //
   ////////////
 
-  describe("RankUp", async () => {
-    it("RankUp : Success : E Rank", async () => {
-      isShadow = false;
-      const addMonsterTx = await monsterFactory
-        .connect(operatorManager)
-        .addMonster(RankType.E, isShadow); // monsterId 1 : E
-      await addMonsterTx.wait();
-
-      const mintTx = await normalMonster
-        .connect(operatorManager)
-        .mintOfTest(hunter1.address, 1, 15);
-      await mintTx.wait();
-
-      const beforeBalance = await normalMonster.balanceOf(hunter1.address, 1);
-      expect(beforeBalance).to.equal(15);
-
-      const approveTx = await normalMonster
-        .connect(hunter1)
-        .setApprovalForAll(season.address, true);
-      await approveTx.wait();
-
-      const rankUpTx = await season
-        .connect(hunter1)
-        .rankUp(1, RankType.E, [1], [10], isShadow);
-
-      const timestamp = await getBlockTimestamp(rankUpTx.blockNumber);
-
-      HunterRankUpEvent = {
-        seasonId: 1,
-        hunter: hunter1.address,
-        rankType: RankType.D,
-        timestamp: timestamp,
-      };
-
-      await expect(rankUpTx)
-        .to.emit(season, "HunterRankUp")
-        .withArgs(
-          HunterRankUpEvent.seasonId,
-          HunterRankUpEvent.hunter,
-          HunterRankUpEvent.rankType,
-          HunterRankUpEvent.timestamp
-        );
-
-      const afterBalance = await normalMonster.balanceOf(hunter1.address, 1);
-      expect(afterBalance).to.equal(5);
-
-      const seasonHunterRank = await season.getHunterRank(1, hunter1.address);
-      expect(seasonHunterRank).to.equal(RankType.D);
-    });
-
-    it("RankUp : Success : D Rank", async () => {
-      isShadow = false;
-      const addMonsterTx = await monsterFactory
-        .connect(operatorManager)
-        .addMonster(RankType.D, isShadow); // monsterId 2 : D
-      await addMonsterTx.wait();
-
-      const addMonsterTx2 = await monsterFactory
-        .connect(operatorManager)
-        .addMonster(RankType.D, isShadow);
-      await addMonsterTx2.wait(); // monsterId 3 : D
-
-      const mintBatchTx = await normalMonster
-        .connect(operatorManager)
-        .mintOfTestBatch(hunter1.address, [2, 3], [15, 15]);
-      await mintBatchTx.wait();
-
-      const beforeBalance = await normalMonster.balanceOfBatch(
-        [hunter1.address, hunter1.address],
-        [2, 3]
-      );
-      expect(beforeBalance[0]).to.equal(15);
-      expect(beforeBalance[1]).to.equal(15);
-
-      const rankUpTx = await season
-        .connect(hunter1)
-        .rankUp(1, RankType.D, [2, 3], [5, 5], isShadow);
-
-      const timestamp = await getBlockTimestamp(rankUpTx.blockNumber);
-
-      HunterRankUpEvent = {
-        seasonId: 1,
-        hunter: hunter1.address,
-        rankType: RankType.C,
-        timestamp: timestamp,
-      };
-
-      await expect(rankUpTx)
-        .to.emit(season, "HunterRankUp")
-        .withArgs(
-          HunterRankUpEvent.seasonId,
-          HunterRankUpEvent.hunter,
-          HunterRankUpEvent.rankType,
-          HunterRankUpEvent.timestamp
-        );
-
-      const afterBalance = await normalMonster.balanceOfBatch(
-        [hunter1.address, hunter1.address],
-        [2, 3]
-      );
-      expect(afterBalance[0]).to.equal(10);
-      expect(afterBalance[1]).to.equal(10);
-
-      const seasonHunterRank = await season.getHunterRank(1, hunter1.address);
-      expect(seasonHunterRank).to.equal(RankType.C);
-    });
-
-    it("RankUp : Success : C Rank", async () => {
-      isShadow = false;
-      const addMonsterTx = await monsterFactory
-        .connect(operatorManager)
-        .addMonster(RankType.C, isShadow); // monsterId 4 : C
-      await addMonsterTx.wait();
-
-      const mintTx = await normalMonster
-        .connect(operatorManager)
-        .mintOfTest(hunter1.address, 4, 10);
-      await mintTx.wait();
-
-      const beforeBalance = await normalMonster.balanceOf(hunter1.address, 4);
-      expect(beforeBalance).to.equal(10);
-
-      const rankUpTx = await season
-        .connect(hunter1)
-        .rankUp(1, RankType.C, [4], [10], isShadow);
-
-      const timestamp = await getBlockTimestamp(rankUpTx.blockNumber);
-
-      HunterRankUpEvent = {
-        seasonId: 1,
-        hunter: hunter1.address,
-        rankType: RankType.B,
-        timestamp: timestamp,
-      };
-
-      await expect(rankUpTx)
-        .to.emit(season, "HunterRankUp")
-        .withArgs(
-          HunterRankUpEvent.seasonId,
-          HunterRankUpEvent.hunter,
-          HunterRankUpEvent.rankType,
-          HunterRankUpEvent.timestamp
-        );
-
-      const afterBalance = await normalMonster.balanceOf(hunter1.address, 4);
-      expect(afterBalance).to.equal(0);
-
-      const seasonHunterRank = await season.getHunterRank(1, hunter1.address);
-      expect(seasonHunterRank).to.equal(RankType.B);
-    });
-
-    it("RankUp : Success : B Rank : Shadow", async () => {
-      isShadow = true;
-      const addMonsterTx = await monsterFactory
-        .connect(operatorManager)
-        .addMonster(RankType.B, isShadow); // shadowMonsterId 1 : B
-      await addMonsterTx.wait();
-
-      const mintTx = await shadowMonster
-        .connect(operatorManager)
-        .mintOfTest(hunter1.address, 1, 5);
-      await mintTx.wait();
-
-      const beforeBalance = await shadowMonster.balanceOf(hunter1.address, 1);
-      expect(beforeBalance).to.equal(5);
-
-      const approveTx = await shadowMonster
-        .connect(hunter1)
-        .setApprovalForAll(season.address, true);
-      await approveTx.wait();
-
-      const rankUpTx = await season
-        .connect(hunter1)
-        .rankUp(1, RankType.B, [1], [1], isShadow);
-
-      const timestamp = await getBlockTimestamp(rankUpTx.blockNumber);
-
-      HunterRankUpEvent = {
-        seasonId: 1,
-        hunter: hunter1.address,
-        rankType: RankType.A,
-        timestamp: timestamp,
-      };
-
-      await expect(rankUpTx)
-        .to.emit(season, "HunterRankUp")
-        .withArgs(
-          HunterRankUpEvent.seasonId,
-          HunterRankUpEvent.hunter,
-          HunterRankUpEvent.rankType,
-          HunterRankUpEvent.timestamp
-        );
-
-      const afterBalance = await shadowMonster.balanceOf(hunter1.address, 1);
-      expect(afterBalance).to.equal(4);
-
-      const seasonHunterRank = await season.getHunterRank(1, hunter1.address);
-      expect(seasonHunterRank).to.equal(RankType.A);
-    });
-
-    it("RankUp : Failed : Invalid Season Id : Not Current", async () => {
-      isShadow = true;
-      const addMonsterTx = await monsterFactory
-        .connect(operatorManager)
-        .addMonster(RankType.A, isShadow); // shadowMonsterId 2 : A
-      await addMonsterTx.wait();
-
-      const mintTx = await shadowMonster
-        .connect(operatorManager)
-        .mintOfTest(hunter1.address, 2, 5);
-      await mintTx.wait();
-
-      const rankUpTx = season
-        .connect(hunter1)
-        .rankUp(0, RankType.A, [2], [1], isShadow);
-
-      await expect(rankUpTx).to.revertedWithCustomError(
-        season,
-        "InvalidSeasonId"
-      );
-    });
-
-    it("RankUp : Failed : Invalid Season Id : Not Exist", async () => {
-      const rankUpTx = season
-        .connect(hunter1)
-        .rankUp(100, RankType.A, [2], [1], isShadow);
-
-      await expect(rankUpTx).to.revertedWithCustomError(
-        season,
-        "InvalidSeasonId"
-      );
-    });
-
-    it("RankUp : Failed : Invalid Rank Type : S Rank", async () => {
-      const rankUpTx = season
-        .connect(hunter1)
-        .rankUp(1, RankType.S, [2], [1], isShadow);
-
-      await expect(rankUpTx).to.revertedWithCustomError(
-        season,
-        "InvalidRankType"
-      );
-    });
-
-    it("RankUp : Failed : Invalid Rank Type : Exceed Rank", async () => {
-      isShadow = false;
-
-      const rankUpTx = season
-        .connect(hunter1)
-        .rankUp(1, RankType.D, [2], [1], isShadow);
-
-      await expect(rankUpTx).to.revertedWithCustomError(
-        season,
-        "InvalidRankType"
-      );
-    });
-
-    it("RankUp : Failed : Invalid Rank Type : Not Enough Rank", async () => {
-      const rankUpTx = season
-        .connect(hunter2)
-        .rankUp(1, RankType.S, [2], [1], isShadow);
-
-      await expect(rankUpTx).to.revertedWithCustomError(
-        season,
-        "InvalidRankType"
-      );
-    });
-
-    it("RankUp : Failed : Invalid Rank Type : Shadow", async () => {
-      isShadow = true;
-
-      const rankUpTx = season
-        .connect(hunter2)
-        .rankUp(1, RankType.E, [1], [1], isShadow);
-
-      await expect(rankUpTx).to.revertedWithCustomError(
-        season,
-        "InvalidRankType"
-      );
-    });
-
-    it("RankUp : Failed : Invalid Monster", async () => {
-      const rankUpTx = season
-        .connect(hunter1)
-        .rankUp(1, RankType.A, [2], [1, 5], isShadow);
-
-      await expect(rankUpTx).to.revertedWithCustomError(
-        season,
-        "InvalidMonster"
-      );
-    });
-
-    it("RankUp : Failed : Invalid Monster : Invalid Amount", async () => {
-      isShadow = false;
-
-      const rankUpTx = season
-        .connect(hunter2)
-        .rankUp(1, RankType.E, [1], [20], isShadow);
-
-      await expect(rankUpTx).to.revertedWithCustomError(
-        season,
-        "InvalidMonster"
-      );
-    });
-
-    it("RankUp : Failed : Invalid Season Id : Invalid Monster : Invalid Monster Rank", async () => {
-      isShadow = false;
-
-      const rankUpTx = season
-        .connect(hunter2)
-        .rankUp(1, RankType.E, [2], [10], isShadow);
-
-      await expect(rankUpTx).to.revertedWithCustomError(
-        season,
-        "InvalidMonster"
-      );
-    });
-
-    it("Set Required Monster For RankUp : Success", async () => {
-      const requiredNormalMonster = [5, 6, 7, 8, 9]; // E - A
-      const requiredShadowMonster = [1, 2]; // B - A
-
-      const setRequiredMonsterForRankUpTx = await season
-        .connect(operatorManager)
-        .setRequiredMonsterForRankUp(
-          requiredNormalMonster,
-          requiredShadowMonster
-        );
-      await setRequiredMonsterForRankUpTx.wait();
-
-      const requiredMonster = await season.getRequiredMonsterForRankUp();
-      for (let i = 0; i < requiredMonster[0].length; i++) {
-        expect(requiredNormalMonster[i]).to.equal(requiredMonster[0][i]);
-      }
-
-      for (let i = 0; i < requiredMonster[1].length; i++) {
-        expect(requiredShadowMonster[i]).to.equal(requiredMonster[1][i]);
-      }
-
-      isShadow = true;
-      const rankUpTx = await season
-        .connect(hunter1)
-        .rankUp(1, RankType.A, [2], [2], isShadow);
-      await rankUpTx.wait();
-
-      const seasonHunterRank = await season.getHunterRank(1, hunter1.address);
-      expect(seasonHunterRank).to.equal(RankType.S);
-
-      const hunterRankTokenBalance = await season.getHunterRankTokenBalance(
-        1,
-        hunter1.address
-      );
-      for (let i = 0; i < hunterRankTokenBalance.length; i++) {
-        expect(hunterRankTokenBalance[i]).to.equal(1);
-      }
-    });
-
-    it("Set Required Monster For RankUp : Failed : Only Operator", async () => {
-      const requiredNormalMonster = [5, 6, 7, 8, 9];
-      const requiredShadowMonster = [1, 2];
-
-      const setRequiredMonsterForRankUpTx = season
-        .connect(notOperator)
-        .setRequiredMonsterForRankUp(
-          requiredNormalMonster,
-          requiredShadowMonster
-        );
-
-      await expect(setRequiredMonsterForRankUpTx).to.revertedWithCustomError(
-        season,
-        "OnlyOperator"
-      );
-    });
-  });
+  // describe("RankUp", async () => {
+  //   it("RankUp : Success : E Rank", async () => {
+  //     isShadow = false;
+  //     const addMonsterTx = await monsterFactory
+  //       .connect(operatorManager)
+  //       .addMonster(RankType.E, isShadow); // monsterId 1 : E
+  //     await addMonsterTx.wait();
+  //
+  //     const mintTx = await normalMonster
+  //       .connect(operatorManager)
+  //       .mintOfTest(hunter1.address, 1, 15);
+  //     await mintTx.wait();
+  //
+  //     const beforeBalance = await normalMonster.balanceOf(hunter1.address, 1);
+  //     expect(beforeBalance).to.equal(15);
+  //
+  //     const approveTx = await normalMonster
+  //       .connect(hunter1)
+  //       .setApprovalForAll(season.address, true);
+  //     await approveTx.wait();
+  //
+  //     const rankUpTx = await season
+  //       .connect(hunter1)
+  //       .rankUp(1, RankType.E, [1], [10], isShadow);
+  //
+  //     const timestamp = await getBlockTimestamp(rankUpTx.blockNumber);
+  //
+  //     HunterRankUpEvent = {
+  //       seasonId: 1,
+  //       hunter: hunter1.address,
+  //       rankType: RankType.D,
+  //       timestamp: timestamp,
+  //     };
+  //
+  //     await expect(rankUpTx)
+  //       .to.emit(season, "HunterRankUp")
+  //       .withArgs(
+  //         HunterRankUpEvent.seasonId,
+  //         HunterRankUpEvent.hunter,
+  //         HunterRankUpEvent.rankType,
+  //         HunterRankUpEvent.timestamp
+  //       );
+  //
+  //     const afterBalance = await normalMonster.balanceOf(hunter1.address, 1);
+  //     expect(afterBalance).to.equal(5);
+  //
+  //     const seasonHunterRank = await season.getHunterRank(1, hunter1.address);
+  //     expect(seasonHunterRank).to.equal(RankType.D);
+  //   });
+  //
+  //   it("RankUp : Success : D Rank", async () => {
+  //     isShadow = false;
+  //     const addMonsterTx = await monsterFactory
+  //       .connect(operatorManager)
+  //       .addMonster(RankType.D, isShadow); // monsterId 2 : D
+  //     await addMonsterTx.wait();
+  //
+  //     const addMonsterTx2 = await monsterFactory
+  //       .connect(operatorManager)
+  //       .addMonster(RankType.D, isShadow);
+  //     await addMonsterTx2.wait(); // monsterId 3 : D
+  //
+  //     const mintBatchTx = await normalMonster
+  //       .connect(operatorManager)
+  //       .mintOfTestBatch(hunter1.address, [2, 3], [15, 15]);
+  //     await mintBatchTx.wait();
+  //
+  //     const beforeBalance = await normalMonster.balanceOfBatch(
+  //       [hunter1.address, hunter1.address],
+  //       [2, 3]
+  //     );
+  //     expect(beforeBalance[0]).to.equal(15);
+  //     expect(beforeBalance[1]).to.equal(15);
+  //
+  //     const rankUpTx = await season
+  //       .connect(hunter1)
+  //       .rankUp(1, RankType.D, [2, 3], [5, 5], isShadow);
+  //
+  //     const timestamp = await getBlockTimestamp(rankUpTx.blockNumber);
+  //
+  //     HunterRankUpEvent = {
+  //       seasonId: 1,
+  //       hunter: hunter1.address,
+  //       rankType: RankType.C,
+  //       timestamp: timestamp,
+  //     };
+  //
+  //     await expect(rankUpTx)
+  //       .to.emit(season, "HunterRankUp")
+  //       .withArgs(
+  //         HunterRankUpEvent.seasonId,
+  //         HunterRankUpEvent.hunter,
+  //         HunterRankUpEvent.rankType,
+  //         HunterRankUpEvent.timestamp
+  //       );
+  //
+  //     const afterBalance = await normalMonster.balanceOfBatch(
+  //       [hunter1.address, hunter1.address],
+  //       [2, 3]
+  //     );
+  //     expect(afterBalance[0]).to.equal(10);
+  //     expect(afterBalance[1]).to.equal(10);
+  //
+  //     const seasonHunterRank = await season.getHunterRank(1, hunter1.address);
+  //     expect(seasonHunterRank).to.equal(RankType.C);
+  //   });
+  //
+  //   it("RankUp : Success : C Rank", async () => {
+  //     isShadow = false;
+  //     const addMonsterTx = await monsterFactory
+  //       .connect(operatorManager)
+  //       .addMonster(RankType.C, isShadow); // monsterId 4 : C
+  //     await addMonsterTx.wait();
+  //
+  //     const mintTx = await normalMonster
+  //       .connect(operatorManager)
+  //       .mintOfTest(hunter1.address, 4, 10);
+  //     await mintTx.wait();
+  //
+  //     const beforeBalance = await normalMonster.balanceOf(hunter1.address, 4);
+  //     expect(beforeBalance).to.equal(10);
+  //
+  //     const rankUpTx = await season
+  //       .connect(hunter1)
+  //       .rankUp(1, RankType.C, [4], [10], isShadow);
+  //
+  //     const timestamp = await getBlockTimestamp(rankUpTx.blockNumber);
+  //
+  //     HunterRankUpEvent = {
+  //       seasonId: 1,
+  //       hunter: hunter1.address,
+  //       rankType: RankType.B,
+  //       timestamp: timestamp,
+  //     };
+  //
+  //     await expect(rankUpTx)
+  //       .to.emit(season, "HunterRankUp")
+  //       .withArgs(
+  //         HunterRankUpEvent.seasonId,
+  //         HunterRankUpEvent.hunter,
+  //         HunterRankUpEvent.rankType,
+  //         HunterRankUpEvent.timestamp
+  //       );
+  //
+  //     const afterBalance = await normalMonster.balanceOf(hunter1.address, 4);
+  //     expect(afterBalance).to.equal(0);
+  //
+  //     const seasonHunterRank = await season.getHunterRank(1, hunter1.address);
+  //     expect(seasonHunterRank).to.equal(RankType.B);
+  //   });
+  //
+  //   it("RankUp : Success : B Rank : Shadow", async () => {
+  //     isShadow = true;
+  //     const addMonsterTx = await monsterFactory
+  //       .connect(operatorManager)
+  //       .addMonster(RankType.B, isShadow); // shadowMonsterId 1 : B
+  //     await addMonsterTx.wait();
+  //
+  //     const mintTx = await shadowMonster
+  //       .connect(operatorManager)
+  //       .mintOfTest(hunter1.address, 1, 5);
+  //     await mintTx.wait();
+  //
+  //     const beforeBalance = await shadowMonster.balanceOf(hunter1.address, 1);
+  //     expect(beforeBalance).to.equal(5);
+  //
+  //     const approveTx = await shadowMonster
+  //       .connect(hunter1)
+  //       .setApprovalForAll(season.address, true);
+  //     await approveTx.wait();
+  //
+  //     const rankUpTx = await season
+  //       .connect(hunter1)
+  //       .rankUp(1, RankType.B, [1], [1], isShadow);
+  //
+  //     const timestamp = await getBlockTimestamp(rankUpTx.blockNumber);
+  //
+  //     HunterRankUpEvent = {
+  //       seasonId: 1,
+  //       hunter: hunter1.address,
+  //       rankType: RankType.A,
+  //       timestamp: timestamp,
+  //     };
+  //
+  //     await expect(rankUpTx)
+  //       .to.emit(season, "HunterRankUp")
+  //       .withArgs(
+  //         HunterRankUpEvent.seasonId,
+  //         HunterRankUpEvent.hunter,
+  //         HunterRankUpEvent.rankType,
+  //         HunterRankUpEvent.timestamp
+  //       );
+  //
+  //     const afterBalance = await shadowMonster.balanceOf(hunter1.address, 1);
+  //     expect(afterBalance).to.equal(4);
+  //
+  //     const seasonHunterRank = await season.getHunterRank(1, hunter1.address);
+  //     expect(seasonHunterRank).to.equal(RankType.A);
+  //   });
+  //
+  //   it("RankUp : Failed : Invalid Season Id : Not Current", async () => {
+  //     isShadow = true;
+  //     const addMonsterTx = await monsterFactory
+  //       .connect(operatorManager)
+  //       .addMonster(RankType.A, isShadow); // shadowMonsterId 2 : A
+  //     await addMonsterTx.wait();
+  //
+  //     const mintTx = await shadowMonster
+  //       .connect(operatorManager)
+  //       .mintOfTest(hunter1.address, 2, 5);
+  //     await mintTx.wait();
+  //
+  //     const rankUpTx = season
+  //       .connect(hunter1)
+  //       .rankUp(0, RankType.A, [2], [1], isShadow);
+  //
+  //     await expect(rankUpTx).to.revertedWithCustomError(
+  //       season,
+  //       "InvalidSeasonId"
+  //     );
+  //   });
+  //
+  //   it("RankUp : Failed : Invalid Season Id : Not Exist", async () => {
+  //     const rankUpTx = season
+  //       .connect(hunter1)
+  //       .rankUp(100, RankType.A, [2], [1], isShadow);
+  //
+  //     await expect(rankUpTx).to.revertedWithCustomError(
+  //       season,
+  //       "InvalidSeasonId"
+  //     );
+  //   });
+  //
+  //   it("RankUp : Failed : Invalid Rank Type : S Rank", async () => {
+  //     const rankUpTx = season
+  //       .connect(hunter1)
+  //       .rankUp(1, RankType.S, [2], [1], isShadow);
+  //
+  //     await expect(rankUpTx).to.revertedWithCustomError(
+  //       season,
+  //       "InvalidRankType"
+  //     );
+  //   });
+  //
+  //   it("RankUp : Failed : Invalid Rank Type : Exceed Rank", async () => {
+  //     isShadow = false;
+  //
+  //     const rankUpTx = season
+  //       .connect(hunter1)
+  //       .rankUp(1, RankType.D, [2], [1], isShadow);
+  //
+  //     await expect(rankUpTx).to.revertedWithCustomError(
+  //       season,
+  //       "InvalidRankType"
+  //     );
+  //   });
+  //
+  //   it("RankUp : Failed : Invalid Rank Type : Not Enough Rank", async () => {
+  //     const rankUpTx = season
+  //       .connect(hunter2)
+  //       .rankUp(1, RankType.S, [2], [1], isShadow);
+  //
+  //     await expect(rankUpTx).to.revertedWithCustomError(
+  //       season,
+  //       "InvalidRankType"
+  //     );
+  //   });
+  //
+  //   it("RankUp : Failed : Invalid Rank Type : Shadow", async () => {
+  //     isShadow = true;
+  //
+  //     const rankUpTx = season
+  //       .connect(hunter2)
+  //       .rankUp(1, RankType.E, [1], [1], isShadow);
+  //
+  //     await expect(rankUpTx).to.revertedWithCustomError(
+  //       season,
+  //       "InvalidRankType"
+  //     );
+  //   });
+  //
+  //   it("RankUp : Failed : Invalid Monster", async () => {
+  //     const rankUpTx = season
+  //       .connect(hunter1)
+  //       .rankUp(1, RankType.A, [2], [1, 5], isShadow);
+  //
+  //     await expect(rankUpTx).to.revertedWithCustomError(
+  //       season,
+  //       "InvalidMonster"
+  //     );
+  //   });
+  //
+  //   it("RankUp : Failed : Invalid Monster : Invalid Amount", async () => {
+  //     isShadow = false;
+  //
+  //     const rankUpTx = season
+  //       .connect(hunter2)
+  //       .rankUp(1, RankType.E, [1], [20], isShadow);
+  //
+  //     await expect(rankUpTx).to.revertedWithCustomError(
+  //       season,
+  //       "InvalidMonster"
+  //     );
+  //   });
+  //
+  //   it("RankUp : Failed : Invalid Season Id : Invalid Monster : Invalid Monster Rank", async () => {
+  //     isShadow = false;
+  //
+  //     const rankUpTx = season
+  //       .connect(hunter2)
+  //       .rankUp(1, RankType.E, [2], [10], isShadow);
+  //
+  //     await expect(rankUpTx).to.revertedWithCustomError(
+  //       season,
+  //       "InvalidMonster"
+  //     );
+  //   });
+  //
+  //   it("Set Required Monster For RankUp : Success", async () => {
+  //     const requiredNormalMonster = [5, 6, 7, 8, 9]; // E - A
+  //     const requiredShadowMonster = [1, 2]; // B - A
+  //
+  //     const setRequiredMonsterForRankUpTx = await season
+  //       .connect(operatorManager)
+  //       .setRequiredMonsterForRankUp(
+  //         requiredNormalMonster,
+  //         requiredShadowMonster
+  //       );
+  //     await setRequiredMonsterForRankUpTx.wait();
+  //
+  //     const requiredMonster = await season.getRequiredMonsterForRankUp();
+  //     for (let i = 0; i < requiredMonster[0].length; i++) {
+  //       expect(requiredNormalMonster[i]).to.equal(requiredMonster[0][i]);
+  //     }
+  //
+  //     for (let i = 0; i < requiredMonster[1].length; i++) {
+  //       expect(requiredShadowMonster[i]).to.equal(requiredMonster[1][i]);
+  //     }
+  //
+  //     isShadow = true;
+  //     const rankUpTx = await season
+  //       .connect(hunter1)
+  //       .rankUp(1, RankType.A, [2], [2], isShadow);
+  //     await rankUpTx.wait();
+  //
+  //     const seasonHunterRank = await season.getHunterRank(1, hunter1.address);
+  //     expect(seasonHunterRank).to.equal(RankType.S);
+  //
+  //     const hunterRankTokenBalance = await season.getHunterRankTokenBalance(
+  //       1,
+  //       hunter1.address
+  //     );
+  //     for (let i = 0; i < hunterRankTokenBalance.length; i++) {
+  //       expect(hunterRankTokenBalance[i]).to.equal(1);
+  //     }
+  //   });
+  //
+  //   it("Set Required Monster For RankUp : Failed : Only Operator", async () => {
+  //     const requiredNormalMonster = [5, 6, 7, 8, 9];
+  //     const requiredShadowMonster = [1, 2];
+  //
+  //     const setRequiredMonsterForRankUpTx = season
+  //       .connect(notOperator)
+  //       .setRequiredMonsterForRankUp(
+  //         requiredNormalMonster,
+  //         requiredShadowMonster
+  //       );
+  //
+  //     await expect(setRequiredMonsterForRankUpTx).to.revertedWithCustomError(
+  //       season,
+  //       "OnlyOperator"
+  //     );
+  //   });
+  // });
 
   //////////
   // Base //
   //////////
 
-  describe("Base", async () => {
-    it("Set Monster Collection Id : Success", async () => {
-      isShadow = false;
-      const setMonsterCollectionIdTx = await season
-        .connect(operatorManager)
-        .setMonsterCollectionId(2, isShadow);
-      await setMonsterCollectionIdTx.wait();
-
-      const monsterCollectionId = await season.getMonsterCollectionId(isShadow);
-      expect(monsterCollectionId).to.equal(2);
-    });
-
-    it("Set Monster Collection Id : Failed : Only Operator", async () => {
-      const setMonsterCollectionIdTx = season
-        .connect(notOperator)
-        .setMonsterCollectionId(2, isShadow);
-
-      await expect(setMonsterCollectionIdTx).to.revertedWithCustomError(
-        season,
-        "OnlyOperator"
-      );
-    });
-
-    it("Set Monster Collection Id : Failed : Invalid Collection Id : Not Exist", async () => {
-      const setMonsterCollectionIdTx = season
-        .connect(operatorManager)
-        .setMonsterCollectionId(200, isShadow);
-
-      await expect(setMonsterCollectionIdTx).to.revertedWithCustomError(
-        season,
-        "InvalidCollectionId"
-      );
-    });
-
-    it("Set Monster Collection Id : Failed : Invalid Collection Id : Not Active", async () => {
-      const setCollectionActiveTx = await project
-        .connect(operatorManager)
-        .setCollectionActive(2, false);
-      await setCollectionActiveTx.wait();
-
-      const setMonsterCollectionIdTx = season
-        .connect(operatorManager)
-        .setMonsterCollectionId(2, isShadow);
-
-      await expect(setMonsterCollectionIdTx).to.revertedWithCustomError(
-        season,
-        "InvalidCollectionId"
-      );
-    });
-
-    it("Set Monster Collection Id : Failed : Invalid Collection Id : Not ERC1155", async () => {
-      const ShadowMonarch = await ethers.getContractFactory("SLShadowMonarch");
-      const shadowMonarch = await upgrades.deployProxy(
-        ShadowMonarch,
-        [project.address, ZERO_ADDRESS, [project.address], "baseTokenURI"],
-        { kind: "uups" }
-      );
-      await shadowMonarch.deployed();
-
-      const addCollectionTx = await project
-        .connect(operatorManager)
-        .addCollection(shadowMonarch.address, creator.address);
-      await addCollectionTx.wait(); // collectionId 6
-
-      const setMonsterCollectionIdTx = season
-        .connect(operatorManager)
-        .setMonsterCollectionId(6, isShadow);
-
-      await expect(setMonsterCollectionIdTx).to.revertedWithCustomError(
-        season,
-        "InvalidCollectionId"
-      );
-    });
-
-    it("Set MonsterFactory Contract : Success", async () => {
-      const setMonsterFactoryContractTx = await season
-        .connect(operatorMaster)
-        .setMonsterFactoryContract(project.address);
-      await setMonsterFactoryContractTx.wait();
-
-      const monsterFactoryContract = await season.getMonsterFactoryContract();
-      expect(monsterFactoryContract).to.equal(project.address);
-    });
-
-    it("Set MonsterFactory Contract : Failed : Only Operator", async () => {
-      const setMonsterFactoryContractTx = season
-        .connect(notOperator)
-        .setMonsterFactoryContract(project.address);
-
-      await expect(setMonsterFactoryContractTx).to.revertedWithCustomError(
-        season,
-        "OnlyOperator"
-      );
-    });
-  });
+  // describe("Base", async () => {
+  //   it("Set Monster Collection Id : Success", async () => {
+  //     isShadow = false;
+  //     const setMonsterCollectionIdTx = await season
+  //       .connect(operatorManager)
+  //       .setMonsterCollectionId(2, isShadow);
+  //     await setMonsterCollectionIdTx.wait();
+  //
+  //     const monsterCollectionId = await season.getMonsterCollectionId(isShadow);
+  //     expect(monsterCollectionId).to.equal(2);
+  //   });
+  //
+  //   it("Set Monster Collection Id : Failed : Only Operator", async () => {
+  //     const setMonsterCollectionIdTx = season
+  //       .connect(notOperator)
+  //       .setMonsterCollectionId(2, isShadow);
+  //
+  //     await expect(setMonsterCollectionIdTx).to.revertedWithCustomError(
+  //       season,
+  //       "OnlyOperator"
+  //     );
+  //   });
+  //
+  //   it("Set Monster Collection Id : Failed : Invalid Collection Id : Not Exist", async () => {
+  //     const setMonsterCollectionIdTx = season
+  //       .connect(operatorManager)
+  //       .setMonsterCollectionId(200, isShadow);
+  //
+  //     await expect(setMonsterCollectionIdTx).to.revertedWithCustomError(
+  //       season,
+  //       "InvalidCollectionId"
+  //     );
+  //   });
+  //
+  //   it("Set Monster Collection Id : Failed : Invalid Collection Id : Not Active", async () => {
+  //     const setCollectionActiveTx = await project
+  //       .connect(operatorManager)
+  //       .setCollectionActive(2, false);
+  //     await setCollectionActiveTx.wait();
+  //
+  //     const setMonsterCollectionIdTx = season
+  //       .connect(operatorManager)
+  //       .setMonsterCollectionId(2, isShadow);
+  //
+  //     await expect(setMonsterCollectionIdTx).to.revertedWithCustomError(
+  //       season,
+  //       "InvalidCollectionId"
+  //     );
+  //   });
+  //
+  //   it("Set Monster Collection Id : Failed : Invalid Collection Id : Not ERC1155", async () => {
+  //     const ShadowMonarch = await ethers.getContractFactory("SLShadowMonarch");
+  //     const shadowMonarch = await upgrades.deployProxy(
+  //       ShadowMonarch,
+  //       [project.address, ZERO_ADDRESS, [project.address], "baseTokenURI"],
+  //       { kind: "uups" }
+  //     );
+  //     await shadowMonarch.deployed();
+  //
+  //     const addCollectionTx = await project
+  //       .connect(operatorManager)
+  //       .addCollection(shadowMonarch.address, creator.address);
+  //     await addCollectionTx.wait(); // collectionId 6
+  //
+  //     const setMonsterCollectionIdTx = season
+  //       .connect(operatorManager)
+  //       .setMonsterCollectionId(6, isShadow);
+  //
+  //     await expect(setMonsterCollectionIdTx).to.revertedWithCustomError(
+  //       season,
+  //       "InvalidCollectionId"
+  //     );
+  //   });
+  //
+  //   it("Set MonsterFactory Contract : Success", async () => {
+  //     const setMonsterFactoryContractTx = await season
+  //       .connect(operatorMaster)
+  //       .setMonsterFactoryContract(project.address);
+  //     await setMonsterFactoryContractTx.wait();
+  //
+  //     const monsterFactoryContract = await season.getMonsterFactoryContract();
+  //     expect(monsterFactoryContract).to.equal(project.address);
+  //   });
+  //
+  //   it("Set MonsterFactory Contract : Failed : Only Operator", async () => {
+  //     const setMonsterFactoryContractTx = season
+  //       .connect(notOperator)
+  //       .setMonsterFactoryContract(project.address);
+  //
+  //     await expect(setMonsterFactoryContractTx).to.revertedWithCustomError(
+  //       season,
+  //       "OnlyOperator"
+  //     );
+  //   });
+  // });
 });

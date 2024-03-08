@@ -44,9 +44,10 @@ describe("DungeonGate", () => {
     KeySoldEvent: KeySold;
 
   let gateId: number;
+  const requiredGateCountForRankUp = [5, 20, 30, 40, 50];
 
   const essenceStoneTokenId = 1;
-  const boostBlockCount = 72;
+  const boostBlockCount = 15;
   const maticPrices = [
     ethers.utils.parseEther("1"),
     ethers.utils.parseEther("1"),
@@ -56,7 +57,7 @@ describe("DungeonGate", () => {
     ethers.utils.parseEther("2"),
   ];
   const usdPrices = [1000000, 4000000, 12000000, 30000000, 66000000, 140000000];
-  const gateBloks = [24, 720, 1440, 2880, 5760, 11520];
+  const gateBloks = [5, 150, 300, 600, 1200, 2400];
 
   const gateClearedEventChecker = (event: any, gateCleared: GateCleared) => {
     expect(event.gateRank).to.equal(gateCleared.gateRank);
@@ -94,13 +95,21 @@ describe("DungeonGate", () => {
         gateCleared.seasonPackReward.seasonPackAmounts[i]
       );
     }
+
+    expect(event.essenceStoneReward).to.equal(gateCleared.essenceStoneReward);
   };
 
   const generateGateCleared = async (
     hunter: string,
     nonce: number,
     gateRank: RankType
-  ) => {
+  ): Promise<{
+    gateSignatures: string[];
+    nonce: number;
+    monsterReward: MonsterReward;
+    seasonPackReward: SeasonPackReward;
+    essenceStoneReward: number;
+  }> => {
     const gateRewardPerRank = await dungeonGate.getGateRewardPerRank();
     const rewards = gateRewardPerRank[gateRank].rewardTokens;
 
@@ -113,6 +122,7 @@ describe("DungeonGate", () => {
       seasonPackIds: [],
       seasonPackAmounts: [],
     };
+    const essenceStoneReward = rewards[7].toNumber();
 
     // normal rank monster
     for (let i = 0; i < 6; i++) {
@@ -196,6 +206,7 @@ describe("DungeonGate", () => {
       nonce,
       monsterReward,
       seasonPackReward,
+      essenceStoneReward,
     };
   };
 
@@ -242,13 +253,9 @@ describe("DungeonGate", () => {
 
     // deploy season
     const SLSeason = await ethers.getContractFactory("SLSeason");
-    season = await upgrades.deployProxy(
-      SLSeason,
-      [project.address, monsterFactory.address, 2, 3],
-      {
-        kind: "uups",
-      }
-    );
+    season = await upgrades.deployProxy(SLSeason, [project.address], {
+      kind: "uups",
+    });
     await season.deployed();
     console.log(`Season deployed to: ${season.address}`);
 
@@ -536,12 +543,12 @@ describe("DungeonGate", () => {
     it("Get Gate Block Per Rank", async () => {
       const gateBlocks = await dungeonGate.getGateBlockPerRank();
 
-      expect(gateBlocks[RankType.E]).to.equal(24);
-      expect(gateBlocks[RankType.D]).to.equal(720);
-      expect(gateBlocks[RankType.C]).to.equal(1440);
-      expect(gateBlocks[RankType.B]).to.equal(2880);
-      expect(gateBlocks[RankType.A]).to.equal(5760);
-      expect(gateBlocks[RankType.S]).to.equal(11520);
+      expect(gateBlocks[RankType.E]).to.equal(5);
+      expect(gateBlocks[RankType.D]).to.equal(150);
+      expect(gateBlocks[RankType.C]).to.equal(300);
+      expect(gateBlocks[RankType.B]).to.equal(600);
+      expect(gateBlocks[RankType.A]).to.equal(1200);
+      expect(gateBlocks[RankType.S]).to.equal(2400);
     });
 
     it("Get Slot Per Hunter Rank", async () => {
@@ -558,6 +565,7 @@ describe("DungeonGate", () => {
     it("Get Gate Reward Per Rank", async () => {
       const gateRewardPerRank = await dungeonGate.getGateRewardPerRank();
       const seasonPackIndex = 6;
+      const essenceStoneIndex = 7;
 
       const ERankReward = gateRewardPerRank[RankType.E].rewardTokens;
       expect(ERankReward[RankType.E]).to.equal(3);
@@ -567,6 +575,7 @@ describe("DungeonGate", () => {
       expect(ERankReward[RankType.A]).to.equal(0);
       expect(ERankReward[RankType.S]).to.equal(0);
       expect(ERankReward[seasonPackIndex]).to.equal(1);
+      expect(ERankReward[essenceStoneIndex]).to.equal(2);
 
       const DRankReward = gateRewardPerRank[RankType.D].rewardTokens;
       expect(DRankReward[StoneType.E]).to.equal(4);
@@ -576,6 +585,7 @@ describe("DungeonGate", () => {
       expect(DRankReward[StoneType.A]).to.equal(0);
       expect(DRankReward[StoneType.S]).to.equal(0);
       expect(DRankReward[seasonPackIndex]).to.equal(2);
+      expect(DRankReward[essenceStoneIndex]).to.equal(9);
 
       const CRankReward = gateRewardPerRank[RankType.C].rewardTokens;
       expect(CRankReward[StoneType.E]).to.equal(5);
@@ -585,6 +595,7 @@ describe("DungeonGate", () => {
       expect(CRankReward[StoneType.A]).to.equal(0);
       expect(CRankReward[StoneType.S]).to.equal(0);
       expect(CRankReward[seasonPackIndex]).to.equal(3);
+      expect(CRankReward[essenceStoneIndex]).to.equal(28);
 
       const BRankReward = gateRewardPerRank[RankType.B].rewardTokens;
       expect(BRankReward[StoneType.E]).to.equal(6);
@@ -594,6 +605,7 @@ describe("DungeonGate", () => {
       expect(BRankReward[StoneType.A]).to.equal(0);
       expect(BRankReward[StoneType.S]).to.equal(0);
       expect(BRankReward[seasonPackIndex]).to.equal(4);
+      expect(BRankReward[essenceStoneIndex]).to.equal(72);
 
       const ARankReward = gateRewardPerRank[RankType.A].rewardTokens;
       expect(ARankReward[StoneType.E]).to.equal(7);
@@ -603,6 +615,7 @@ describe("DungeonGate", () => {
       expect(ARankReward[StoneType.A]).to.equal(2);
       expect(ARankReward[StoneType.S]).to.equal(0);
       expect(ARankReward[seasonPackIndex]).to.equal(5);
+      expect(ARankReward[essenceStoneIndex]).to.equal(160);
 
       const SRankReward = gateRewardPerRank[RankType.S].rewardTokens;
       expect(SRankReward[StoneType.E]).to.equal(8);
@@ -612,6 +625,18 @@ describe("DungeonGate", () => {
       expect(SRankReward[StoneType.A]).to.equal(3);
       expect(SRankReward[StoneType.S]).to.equal(2);
       expect(SRankReward[seasonPackIndex]).to.equal(6);
+      expect(SRankReward[essenceStoneIndex]).to.equal(340);
+    });
+
+    it("Get Required Gate Count For RankUp", async () => {
+      const gateCounts = await dungeonGate.getRequiredGateCountForRankUp();
+
+      expect(gateCounts[RankType.E]).to.equal(requiredGateCountForRankUp[0]);
+      expect(gateCounts[RankType.D]).to.equal(requiredGateCountForRankUp[1]);
+      expect(gateCounts[RankType.C]).to.equal(requiredGateCountForRankUp[2]);
+      expect(gateCounts[RankType.B]).to.equal(requiredGateCountForRankUp[3]);
+      expect(gateCounts[RankType.A]).to.equal(requiredGateCountForRankUp[4]);
+      expect(gateCounts[RankType.S]).to.equal(requiredGateCountForRankUp[5]);
     });
 
     it("Enter to Gate : Success : Key Owner", async () => {
@@ -640,6 +665,8 @@ describe("DungeonGate", () => {
         gateId: 1,
         startBlock: enterToGateTx.blockNumber,
         endBlock: enterToGateTx.blockNumber + gateBloks[RankType.E],
+        isRankUp: false,
+        nextHunterRank: RankType.E,
       };
 
       await expect(enterToGateTx)
@@ -650,7 +677,9 @@ describe("DungeonGate", () => {
           GateCreatedEvent.hunter,
           GateCreatedEvent.gateId,
           GateCreatedEvent.startBlock,
-          GateCreatedEvent.endBlock
+          GateCreatedEvent.endBlock,
+          GateCreatedEvent.isRankUp,
+          GateCreatedEvent.nextHunterRank
         );
 
       const isExist = await dungeonGate.isExistGateById(gateId);
@@ -815,12 +844,17 @@ describe("DungeonGate", () => {
     it("Clear Gate : Success : E Rank : Clear", async () => {
       await setNextBlockNumber(10);
 
-      const { gateSignatures, nonce, monsterReward, seasonPackReward } =
-        await generateGateCleared(
-          hunter1.address,
-          Number(await random.getNonce(hunter1.address)),
-          RankType.E
-        );
+      const {
+        gateSignatures,
+        nonce,
+        monsterReward,
+        seasonPackReward,
+        essenceStoneReward,
+      } = await generateGateCleared(
+        hunter1.address,
+        Number(await random.getNonce(hunter1.address)),
+        RankType.E
+      );
 
       const clearGateTx = await dungeonGate
         .connect(hunter1)
@@ -838,6 +872,7 @@ describe("DungeonGate", () => {
         gateSignatures,
         monsterReward,
         seasonPackReward,
+        essenceStoneReward,
         timestamp,
       };
 
@@ -922,12 +957,17 @@ describe("DungeonGate", () => {
       await approveTx.wait();
 
       // clear
-      const { gateSignatures, nonce, monsterReward, seasonPackReward } =
-        await generateGateCleared(
-          hunter1.address,
-          Number(await random.getNonce(hunter1.address)),
-          RankType.D
-        );
+      const {
+        gateSignatures,
+        nonce,
+        monsterReward,
+        seasonPackReward,
+        essenceStoneReward,
+      } = await generateGateCleared(
+        hunter1.address,
+        Number(await random.getNonce(hunter1.address)),
+        RankType.D
+      );
 
       const clearGateTx = await dungeonGate
         .connect(hunter1)
@@ -945,6 +985,7 @@ describe("DungeonGate", () => {
         gateSignatures,
         monsterReward,
         seasonPackReward,
+        essenceStoneReward,
         timestamp: timestamp2,
       };
 
@@ -1008,12 +1049,17 @@ describe("DungeonGate", () => {
 
       await setNextBlockNumber(1440);
 
-      const { gateSignatures, nonce, monsterReward, seasonPackReward } =
-        await generateGateCleared(
-          hunter1.address,
-          Number(await random.getNonce(hunter1.address)),
-          RankType.C
-        );
+      const {
+        gateSignatures,
+        nonce,
+        monsterReward,
+        seasonPackReward,
+        essenceStoneReward,
+      } = await generateGateCleared(
+        hunter1.address,
+        Number(await random.getNonce(hunter1.address)),
+        RankType.C
+      );
 
       const clearGateTx = await dungeonGate
         .connect(hunter1)
@@ -1031,6 +1077,7 @@ describe("DungeonGate", () => {
         gateSignatures,
         monsterReward,
         seasonPackReward,
+        essenceStoneReward,
         timestamp: timestamp2,
       };
 
@@ -1064,12 +1111,17 @@ describe("DungeonGate", () => {
 
       await setNextBlockNumber(2880);
 
-      const { gateSignatures, nonce, monsterReward, seasonPackReward } =
-        await generateGateCleared(
-          hunter1.address,
-          Number(await random.getNonce(hunter1.address)),
-          RankType.B
-        );
+      const {
+        gateSignatures,
+        nonce,
+        monsterReward,
+        seasonPackReward,
+        essenceStoneReward,
+      } = await generateGateCleared(
+        hunter1.address,
+        Number(await random.getNonce(hunter1.address)),
+        RankType.B
+      );
 
       const clearGateTx = await dungeonGate
         .connect(hunter1)
@@ -1087,6 +1139,7 @@ describe("DungeonGate", () => {
         gateSignatures,
         monsterReward,
         seasonPackReward,
+        essenceStoneReward,
         timestamp,
       };
 
@@ -1127,12 +1180,17 @@ describe("DungeonGate", () => {
       );
       await mintTx.wait();
 
-      const { gateSignatures, nonce, monsterReward, seasonPackReward } =
-        await generateGateCleared(
-          hunter1.address,
-          Number(await random.getNonce(hunter1.address)),
-          RankType.A
-        );
+      const {
+        gateSignatures,
+        nonce,
+        monsterReward,
+        seasonPackReward,
+        essenceStoneReward,
+      } = await generateGateCleared(
+        hunter1.address,
+        Number(await random.getNonce(hunter1.address)),
+        RankType.A
+      );
 
       const clearGateTx = await dungeonGate
         .connect(hunter1)
@@ -1150,6 +1208,7 @@ describe("DungeonGate", () => {
         gateSignatures,
         monsterReward,
         seasonPackReward,
+        essenceStoneReward,
         timestamp,
       };
 
@@ -1182,12 +1241,17 @@ describe("DungeonGate", () => {
 
       await setNextBlockNumber(11520);
 
-      const { gateSignatures, nonce, monsterReward, seasonPackReward } =
-        await generateGateCleared(
-          hunter1.address,
-          Number(await random.getNonce(hunter1.address)),
-          RankType.S
-        );
+      const {
+        gateSignatures,
+        nonce,
+        monsterReward,
+        seasonPackReward,
+        essenceStoneReward,
+      } = await generateGateCleared(
+        hunter1.address,
+        Number(await random.getNonce(hunter1.address)),
+        RankType.S
+      );
 
       const hunterArray = Array(monsterReward.monsterIds.length).fill(
         hunter1.address
@@ -1221,6 +1285,7 @@ describe("DungeonGate", () => {
         gateSignatures,
         monsterReward,
         seasonPackReward,
+        essenceStoneReward,
         timestamp,
       };
 
@@ -1332,6 +1397,12 @@ describe("DungeonGate", () => {
         RankType.S
       );
 
+      const stoneBalance = await essenceStone.balanceOf(hunter1.address, 1);
+      const burnTx = await essenceStone
+        .connect(hunter1)
+        .burn(hunter1.address, 1, stoneBalance);
+      await burnTx.wait();
+
       const clearGateTx = dungeonGate
         .connect(hunter1)
         .clearGate(gateId, gateSignatures);
@@ -1401,12 +1472,12 @@ describe("DungeonGate", () => {
 
     it("Set Gate Reward Per Rank : Success", async () => {
       const rewards = [
-        { rewardTokens: [10, 0, 0, 0, 0, 0, 0] },
-        { rewardTokens: [0, 10, 0, 0, 0, 0, 0] },
-        { rewardTokens: [0, 0, 10, 0, 0, 0, 0] },
-        { rewardTokens: [0, 0, 0, 10, 0, 0, 0] },
-        { rewardTokens: [0, 0, 0, 0, 10, 0, 0] },
-        { rewardTokens: [0, 0, 0, 0, 0, 10, 0] },
+        { rewardTokens: [10, 0, 0, 0, 0, 0, 0, 5] },
+        { rewardTokens: [0, 10, 0, 0, 0, 0, 0, 5] },
+        { rewardTokens: [0, 0, 10, 0, 0, 0, 0, 5] },
+        { rewardTokens: [0, 0, 0, 10, 0, 0, 0, 5] },
+        { rewardTokens: [0, 0, 0, 0, 10, 0, 0, 5] },
+        { rewardTokens: [0, 0, 0, 0, 0, 10, 0, 5] },
       ];
 
       const setGateRewardPerRankTx = await dungeonGate.setGateRewardPerRank(
@@ -1424,6 +1495,7 @@ describe("DungeonGate", () => {
       expect(ERankPercentages[StoneType.A]).to.equal(0);
       expect(ERankPercentages[StoneType.S]).to.equal(0);
       expect(ERankPercentages[6]).to.equal(0);
+      expect(ERankPercentages[7]).to.equal(5);
 
       const DRankPercentages = newRewards[RankType.D].rewardTokens;
       expect(DRankPercentages[StoneType.E]).to.equal(0);
@@ -1433,6 +1505,7 @@ describe("DungeonGate", () => {
       expect(DRankPercentages[StoneType.A]).to.equal(0);
       expect(DRankPercentages[StoneType.S]).to.equal(0);
       expect(DRankPercentages[6]).to.equal(0);
+      expect(DRankPercentages[7]).to.equal(5);
 
       const CRankPercentages = newRewards[RankType.C].rewardTokens;
       expect(CRankPercentages[StoneType.E]).to.equal(0);
@@ -1442,6 +1515,7 @@ describe("DungeonGate", () => {
       expect(CRankPercentages[StoneType.A]).to.equal(0);
       expect(CRankPercentages[StoneType.S]).to.equal(0);
       expect(CRankPercentages[6]).to.equal(0);
+      expect(CRankPercentages[7]).to.equal(5);
 
       const BRankPercentages = newRewards[RankType.B].rewardTokens;
       expect(BRankPercentages[StoneType.E]).to.equal(0);
@@ -1451,6 +1525,7 @@ describe("DungeonGate", () => {
       expect(BRankPercentages[StoneType.A]).to.equal(0);
       expect(BRankPercentages[StoneType.S]).to.equal(0);
       expect(BRankPercentages[6]).to.equal(0);
+      expect(BRankPercentages[7]).to.equal(5);
 
       const ARankPercentages = newRewards[RankType.A].rewardTokens;
       expect(ARankPercentages[StoneType.E]).to.equal(0);
@@ -1460,6 +1535,7 @@ describe("DungeonGate", () => {
       expect(ARankPercentages[StoneType.A]).to.equal(10);
       expect(ARankPercentages[StoneType.S]).to.equal(0);
       expect(ARankPercentages[6]).to.equal(0);
+      expect(ARankPercentages[7]).to.equal(5);
 
       const SRankPercentages = newRewards[RankType.S].rewardTokens;
       expect(SRankPercentages[StoneType.E]).to.equal(0);
@@ -1469,16 +1545,17 @@ describe("DungeonGate", () => {
       expect(SRankPercentages[StoneType.A]).to.equal(0);
       expect(SRankPercentages[StoneType.S]).to.equal(10);
       expect(SRankPercentages[6]).to.equal(0);
+      expect(SRankPercentages[7]).to.equal(5);
     });
 
     it("Set Gate Reward Per Rank : Failed : Only Operator", async () => {
       const rewards = [
-        { rewardTokens: [10, 0, 0, 0, 0, 0, 0] },
-        { rewardTokens: [0, 10, 0, 0, 0, 0, 0] },
-        { rewardTokens: [0, 0, 10, 0, 0, 0, 0] },
-        { rewardTokens: [0, 0, 0, 10, 0, 0, 0] },
-        { rewardTokens: [0, 0, 0, 0, 10, 0, 0] },
-        { rewardTokens: [0, 0, 0, 0, 0, 10, 0] },
+        { rewardTokens: [10, 0, 0, 0, 0, 0, 0, 5] },
+        { rewardTokens: [0, 10, 0, 0, 0, 0, 0, 5] },
+        { rewardTokens: [0, 0, 10, 0, 0, 0, 0, 5] },
+        { rewardTokens: [0, 0, 0, 10, 0, 0, 0, 5] },
+        { rewardTokens: [0, 0, 0, 0, 10, 0, 0, 5] },
+        { rewardTokens: [0, 0, 0, 0, 0, 10, 0, 5] },
       ];
 
       const setGateRewardPerRankTx = dungeonGate

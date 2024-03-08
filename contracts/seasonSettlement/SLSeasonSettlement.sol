@@ -28,11 +28,23 @@ contract SLSeasonSettlement is Reward, UUPSUpgradeable {
         SRankRewardCollectionId = _SRankRewardCollectionId;
         seasonScoreCollectionId = _seasonScoreCollectionId;
 
+        /**
+scorePerGate['E'] = 1;
+scorePerGate['D'] = 3;
+scorePerGate['E'] = 1;
+scorePerGate['E'] = 1;
+
+ */
         scorePerGate = 100;
+        // scoreRate = ScoreRate({
+        //     quest: 0,
+        //     activity: 60_00000, // 현재는 gate 진입 행동 밖에 없음.
+        //     collecting: 40_00000 // 몬스터 카드 수집 점수.
+        // });
         scoreRate = ScoreRate({
             quest: 0,
-            activity: 60_00000,
-            collecting: 40_00000
+            activity: 40_00000, // 현재는 gate 진입 행동 밖에 없음.
+            collecting: 60_00000 // 몬스터 카드 수집 점수.
         });
     }
 

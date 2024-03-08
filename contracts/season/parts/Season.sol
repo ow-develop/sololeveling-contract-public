@@ -93,6 +93,13 @@ abstract contract Season is ISLSeason, SeasonBase {
 
         uint256 beforeEndBlock;
         uint256 afterStartBlock;
+
+        if (_seasonId == 0) {
+            // TO DO:  initialize start, end block
+            beforeEndBlock = seasons[_seasonId].endBlock;
+            afterStartBlock = seasons[_seasonId].startBlock;
+        }
+
         if (_seasonId > 0) {
             beforeEndBlock = seasons[_seasonId - 1].endBlock;
         }

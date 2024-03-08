@@ -41,7 +41,6 @@ interface ISLMonster {
     /*
      *  Base
      */
-
     function setMonsterFactoryContract(
         ISLMonsterFactory _monsterFactoryContract
     ) external;

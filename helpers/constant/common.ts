@@ -1,4 +1,4 @@
-export const PublicNetwork = ["polygon", "mumbai"];
+export const PublicNetwork = ["polygon", "mumbai", "arbitrumSepolia"];
 
 export enum ContractType {
   Project = "Project",

@@ -31,7 +31,7 @@ contract SLEssenceStone is
     function initialize(
         ISLProject _projectContract,
         ISLApprovalController _approvalControllerContract,
-        address[] calldata _controllers, // systemContract
+        address[] calldata _controllers, // systemContract, dungeonGateContract, shopContract
         string memory _baseTokenURI
     ) public initializer {
         __SLCotroller_init(_projectContract);
@@ -136,6 +136,22 @@ contract SLEssenceStone is
         }
 
         _mintBatch(_to, _tokenIds, _amounts, "");
+    }
+
+    function mintOfAirdrop(
+        address[] calldata _accounts,
+        uint256[] calldata _tokenIds,
+        uint256[] calldata _amounts
+    ) external onlyOperator {
+        for (uint256 i = 0; i < _tokenIds.length; i = i.increment()) {
+            if (!exists(_tokenIds[i])) {
+                revert DoesNotExistTokenId();
+            }
+
+            mintedSupplyOfToken[_tokenIds[i]] += _amounts[i];
+
+            _mint(_accounts[i], _tokenIds[i], _amounts[i], "");
+        }
     }
 
     /*

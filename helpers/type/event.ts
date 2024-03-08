@@ -56,16 +56,6 @@ export interface SetAriseMonsterBatch {
 }
 
 /*
- *  Season
- */
-export interface HunterRankUp {
-  seasonId: number;
-  hunter: string;
-  rankType: RankType;
-  timestamp: number;
-}
-
-/*
  *  SeasonQuest
  */
 export interface QuestCompleted {
@@ -85,6 +75,8 @@ export interface GateCreated {
   gateId: number;
   startBlock: number;
   endBlock: number;
+  isRankUp: boolean;
+  nextHunterRank: RankType;
 }
 
 export interface GateCleared {
@@ -96,6 +88,7 @@ export interface GateCleared {
   gateSignatures: string[];
   monsterReward: MonsterReward;
   seasonPackReward: SeasonPackReward;
+  essenceStoneReward: number;
   timestamp: number;
 }
 

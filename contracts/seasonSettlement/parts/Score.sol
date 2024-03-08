@@ -203,6 +203,9 @@ abstract contract Score is ISLSeasonSettlement, SeasonSettlementBase {
             seasonQuestContract.getHunterQuestScoreBatch(_seasonId, _hunters);
     }
 
+/**
+ * 활동 스코어 조회.
+ */
     function _getActivityScore(
         uint256 _seasonId,
         address _hunter

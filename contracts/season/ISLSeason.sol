@@ -4,7 +4,6 @@ pragma solidity ^0.8.9;
 
 import {BaseStorage} from "../core/BaseStorage.sol";
 import {SeasonBase} from "./SeasonBase.sol";
-import {ISLMonsterFactory} from "../monsterFactory/ISLMonsterFactory.sol";
 
 interface ISLSeason {
     /*
@@ -56,29 +55,8 @@ interface ISLSeason {
     function getSeasonLength() external view returns (uint256);
 
     /*
-     *  RankUp
+     *  HunterRank
      */
-    function rankUp(
-        uint256 _seasonId,
-        BaseStorage.RankType _hunterRank,
-        uint256[] calldata _monsterIds,
-        uint256[] calldata _monsterAmounts,
-        bool _isShadow
-    ) external;
-
-    function setRequiredMonsterForRankUp(
-        uint256[5] calldata _requiredNormalMonsters,
-        uint256[2] calldata _requiredShadowMonsters
-    ) external;
-
-    function getRequiredMonsterForRankUp()
-        external
-        view
-        returns (
-            uint256[5] memory requiredNormalMonsters,
-            uint256[2] memory requiredShadowMonsters
-        );
-
     function getHunterRankTokenBalance(
         uint256 _seasonId,
         address _hunter
@@ -88,25 +66,4 @@ interface ISLSeason {
         uint256 _seasonId,
         address _hunter
     ) external view returns (BaseStorage.RankType);
-
-    /*
-     *  Collection
-     */
-    function setMonsterCollectionId(
-        uint256 _monsterCollectionId,
-        bool _isShadow
-    ) external;
-
-    function getMonsterCollectionId(
-        bool _isShadow
-    ) external view returns (uint256);
-
-    /*
-     *  Base
-     */
-    function setMonsterFactoryContract(
-        ISLMonsterFactory _monsterFactoryContract
-    ) external;
-
-    function getMonsterFactoryContract() external view returns (address);
 }

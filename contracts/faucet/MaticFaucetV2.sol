@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 
 contract MaticFaucetV2 {
     address public owner;
-    uint256 public mintAmount = 3 ether;
+    uint256 public mintAmount = 10000000000000000; // 0.01 ether
 
     constructor() {
         owner = msg.sender;

@@ -11,6 +11,7 @@ import {Slot} from "./Slot.sol";
 import {ISLMT} from "../../collections/ISLMT.sol";
 import {ISLSeasonPack} from "../../collections/seasonPack/ISLSeasonPack.sol";
 import {ShopBase} from "../../shop/ShopBase.sol";
+import {SeasonBase} from "../../season/SeasonBase.sol";
 import {IERC20} from "../../standard/ERC/ERC20/IERC20.sol";
 
 abstract contract Gate is Slot {
@@ -42,9 +43,11 @@ abstract contract Gate is Slot {
             projectContract.getTokenContractByCollectionId(gateKeyCollectionId)
         );
 
+        // 던전 진입시, 기존 key를 사용하는 경우.
         if (key.balanceOf(hunter, keyTokenId) > 0) {
             if (value != 0) revert InvalidPrice();
         } else {
+            // 던전 진입시, key 를 구매하여 진행하는 경우.
             (ShopBase.PriceMode priceMode, uint256 price) = shopContract
                 .getLatestKeyPrice(_gateRank);
 
@@ -94,7 +97,51 @@ abstract contract Gate is Slot {
             hunter: hunter
         });
 
-        gateCountOfSeason[_seasonId][hunter].increment();
+        // 현재 시즌의 헌터의 누적 gate count(:level-score) 증가.
+        // Before : gateCountOfSeason[_seasonId][hunter].increment();
+        // TO DO: 진입한 gate rank 에 따라 gate count(:level-score) 증가 수치 다르게 처리.
+        if (_gateRank == RankType.E) {
+            gateCountOfSeason[_seasonId][hunter]++;
+        } else if (_gateRank == RankType.D) {
+            gateCountOfSeason[_seasonId][hunter] += 3;
+        } else if (_gateRank == RankType.C) {
+            gateCountOfSeason[_seasonId][hunter] += 5;
+        } else if (_gateRank == RankType.B) {
+            gateCountOfSeason[_seasonId][hunter] += 8;
+        } else if (_gateRank == RankType.A) {
+            gateCountOfSeason[_seasonId][hunter] += 10;
+        } else if (_gateRank == RankType.S) {
+            gateCountOfSeason[_seasonId][hunter] += 15;
+        }
+
+        // 랭크업 조건 체크 로직.
+        bool isRankUp;
+        RankType nextHunterRank;
+
+        {
+            uint256 seasonId = _seasonId;
+            address rankUpHunter = hunter;
+
+            if (
+                hunterRank != RankType.S &&
+                requiredGateCountForRankUp[hunterRank] <=
+                gateCountOfSeason[seasonId][rankUpHunter]
+            ) {
+                SeasonBase.Season memory season = seasonContract.getSeasonById(
+                    seasonId
+                );
+
+                ISLMT hunterRankToken = ISLMT(
+                    projectContract.getTokenContractByCollectionId(
+                        season.hunterRankCollectionId
+                    )
+                );
+
+                isRankUp = true;
+                nextHunterRank = RankType(uint256(hunterRank) + 1);
+                hunterRankToken.mint(rankUpHunter, uint256(nextHunterRank), 1);
+            }
+        }
 
         emit GateCreated(
             _seasonId,
@@ -102,7 +149,9 @@ abstract contract Gate is Slot {
             hunter,
             gateId,
             startBlock,
-            endBlock
+            endBlock,
+            isRankUp,
+            nextHunterRank
         );
     }
 
@@ -128,7 +177,7 @@ abstract contract Gate is Slot {
         gate.cleared = true;
         gateOfHunterSlot[hunter].remove(_gateId);
 
-        ISLMT essenceStone = ISLMT(
+        ISLMT essenceStoneContract = ISLMT(
             projectContract.getTokenContractByCollectionId(
                 essenceStoneCollectionId
             )
@@ -137,20 +186,26 @@ abstract contract Gate is Slot {
         uint256 requiredStone = getRequiredStoneForClear(_gateId);
 
         if (requiredStone > 0) {
-            essenceStone.burn(hunter, ESSENCE_STONE_TOKEN_ID, requiredStone);
+            essenceStoneContract.burn(
+                hunter,
+                ESSENCE_STONE_TOKEN_ID,
+                requiredStone
+            );
 
             gate.usedStone += requiredStone.toUint32();
         }
 
         (
             MonsterReward memory monsterReward,
-            SeasonPackReward memory seasonPackReward
+            SeasonPackReward memory seasonPackReward,
+            uint256 essenceStoneReward
         ) = _mintGateRewardToken(
                 hunter,
                 gate.gateRank,
                 randomCount,
                 gate.seasonId,
-                _gateSignatures
+                _gateSignatures,
+                essenceStoneContract
             );
 
         emit GateCleared(
@@ -162,6 +217,7 @@ abstract contract Gate is Slot {
             _gateSignatures,
             monsterReward,
             seasonPackReward,
+            essenceStoneReward,
             block.timestamp
         );
     }
@@ -171,15 +227,17 @@ abstract contract Gate is Slot {
         RankType _gateRank,
         RandomCount memory _randomCount,
         uint256 _seasonId,
-        bytes[] calldata _gateSignatures
+        bytes[] calldata _gateSignatures,
+        ISLMT _essenceStoneContract
     )
         private
         returns (
             MonsterReward memory monsterReward,
-            SeasonPackReward memory seasonPackReward
+            SeasonPackReward memory seasonPackReward,
+            uint256 essenceStoneReward
         )
     {
-        uint256[7] memory rewardTokens = rewardTokensPerRank[_gateRank];
+        uint256[8] memory rewardTokens = rewardTokensPerRank[_gateRank];
         uint256 signatureIndex;
 
         ISLMT monsterContract = ISLMT(
@@ -214,6 +272,15 @@ abstract contract Gate is Slot {
                 ),
                 _gateSignatures,
                 seasonId
+            );
+        }
+
+        essenceStoneReward = rewardTokens[7];
+        if (essenceStoneReward > 0) {
+            _essenceStoneContract.mint(
+                _hunter,
+                ESSENCE_STONE_TOKEN_ID,
+                essenceStoneReward
             );
         }
     }
@@ -405,9 +472,9 @@ abstract contract Gate is Slot {
         RankType _gateRank
     ) public view returns (RandomCount memory) {
         RandomCount memory randomCount;
-        uint256[7] memory rewardTokens = rewardTokensPerRank[_gateRank];
+        uint256[8] memory rewardTokens = rewardTokensPerRank[_gateRank];
 
-        for (uint i = 0; i < rewardTokens.length - 1; i = i.increment()) {
+        for (uint i = 0; i < 6; i = i.increment()) {
             randomCount.monsterCount += rewardTokens[i];
         }
 
@@ -502,7 +569,7 @@ abstract contract Gate is Slot {
         uint256 _seasonId,
         address _hunter
     ) private view returns (uint256) {
-        return gateCountOfSeason[_seasonId][_hunter].current();
+        return gateCountOfSeason[_seasonId][_hunter];
     }
 
     /*
@@ -534,6 +601,15 @@ abstract contract Gate is Slot {
         boostBlockCount = _boostBlockCount;
     }
 
+    // E - A
+    function setRequiredGateCountForRankUp(
+        uint256[5] calldata _requiredGateCounts
+    ) external onlyOperator {
+        for (uint256 i = 0; i < _requiredGateCounts.length; i = i.increment()) {
+            requiredGateCountForRankUp[RankType(i)] = _requiredGateCounts[i];
+        }
+    }
+
     function getGateBlockPerRank() external view returns (uint256[6] memory) {
         uint256[6] memory gateBlocks;
 
@@ -560,5 +636,19 @@ abstract contract Gate is Slot {
 
     function getBoostBlockCount() external view returns (uint256) {
         return boostBlockCount;
+    }
+
+    function getRequiredGateCountForRankUp()
+        external
+        view
+        returns (uint256[5] memory)
+    {
+        uint256[5] memory requiredGateCounts;
+
+        for (uint256 i = 0; i < 5; i = i.increment()) {
+            requiredGateCounts[i] = requiredGateCountForRankUp[RankType(i)];
+        }
+
+        return requiredGateCounts;
     }
 }

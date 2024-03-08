@@ -181,7 +181,7 @@ contract SLInviteSBT is
     function getSBTId(address _inviter) public pure returns (uint256) {
         return
             uint256(keccak256(abi.encodePacked(_inviter, name))) %
-            type(uint64).max;
+            type(uint32).max;
     }
 
     function isInviter(

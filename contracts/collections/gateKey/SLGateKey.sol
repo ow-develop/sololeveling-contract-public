@@ -223,6 +223,22 @@ contract SLGateKey is
         emit KeyMintedBatch(sender, _keyRanks, _amounts, block.timestamp);
     }
 
+    function mintOfAirdrop(
+        address[] calldata _accounts,
+        uint256[] calldata _tokenIds,
+        uint256[] calldata _amounts
+    ) external onlyOperator {
+        for (uint256 i = 0; i < _tokenIds.length; i = i.increment()) {
+            if (!exists(_tokenIds[i])) {
+                revert DoesNotExistTokenId();
+            }
+
+            mintedSupplyOfToken[_tokenIds[i]] += _amounts[i];
+
+            _mint(_accounts[i], _tokenIds[i], _amounts[i], "");
+        }
+    }
+
     function _verifyWhitelistSignature(
         address _account,
         bytes calldata _signature,

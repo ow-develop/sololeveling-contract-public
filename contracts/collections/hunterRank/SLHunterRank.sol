@@ -27,7 +27,7 @@ contract SLHunterRank is
 
     constructor(
         ISLProject _projectContract,
-        address[] memory _controllers, // seasonContract
+        address[] memory _controllers, // dungeonGateContract
         string memory _baseTokenURI
     )
         ERC1155(_baseTokenURI)

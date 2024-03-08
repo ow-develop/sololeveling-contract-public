@@ -6,7 +6,6 @@ import { getBlockTimestamp } from "../helpers/block-timestamp";
 import { RankType } from "../helpers/constant/contract";
 import {
   AddMonster,
-  Create,
   SetAriseMonster,
   SetAriseMonsterBatch,
   SetMonsterRankType,
@@ -25,8 +24,7 @@ describe("MonsterFactory", () => {
     normalMonster: Contract,
     shadowMonster: Contract;
 
-  let CreateEvent: Create,
-    AddMonsterEvent: AddMonster,
+  let AddMonsterEvent: AddMonster,
     SetMonsterRankTypeEvent: SetMonsterRankType,
     SetAriseMonsterEvent: SetAriseMonster,
     SetAriseMonsterBatchEvent: SetAriseMonsterBatch;

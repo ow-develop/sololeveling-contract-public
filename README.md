@@ -25,3 +25,9 @@ Deploy hardhat test network:
 ```bash
 npm run deploy-test
 ```
+
+Deploy polygon-mumbai network:
+
+```bash
+npm run deploy-mumbai
+```

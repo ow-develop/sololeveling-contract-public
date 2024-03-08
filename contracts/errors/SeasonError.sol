@@ -12,12 +12,4 @@ interface SeasonError {
     error InvalidCollectionId();
     error EndedSeason();
     error AlreadyStartSeason();
-
-    ////////////
-    // RankUp //
-    ////////////
-
-    error InvalidRankType();
-    error InvalidMonster();
-    error InvalidArgument();
 }

@@ -67,7 +67,7 @@ interface ISLDungeonGate {
         view
         returns (
             DungeonGateBase.Gate[] memory gateOfHunterSlot,
-            uint256[] memory requiredBrokenStones
+            uint256[] memory requiredStones
         );
 
     function isClearGate(uint256 _gateId) external view returns (bool);
@@ -99,6 +99,10 @@ interface ISLDungeonGate {
 
     function setBoostBlockCount(uint256 _boostBlockCount) external;
 
+    function setRequiredGateCountForRankUp(
+        uint256[5] calldata _requiredGateCounts
+    ) external;
+
     function getGateBlockPerRank() external view returns (uint256[6] memory);
 
     function getGateRewardPerRank()
@@ -107,6 +111,11 @@ interface ISLDungeonGate {
         returns (DungeonGateBase.GateReward[6] memory);
 
     function getBoostBlockCount() external view returns (uint256);
+
+    function getRequiredGateCountForRankUp()
+        external
+        view
+        returns (uint256[5] memory);
 
     /*
      *  Collection

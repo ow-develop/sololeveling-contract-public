@@ -1,0 +1,630 @@
+[
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "AlreadyClaimedGate"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "ExceedGateSlot"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "ExceedRemainingBlock"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "InvalidAccount"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "InvalidAddress"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "InvalidArgument"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "InvalidBadgeId"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "InvalidCollectionId"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "InvalidGateId"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "InvalidGateSignature"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "InvalidPercentage"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "InvalidPrice"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "InvalidRankType"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "InvalidRate"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "InvalidSeasonId"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "InvalidSlot"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "OnlyOperator"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "OnlyOperatorMaster"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "TransferFailed"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "enum BaseStorage.RankType",
+        "name": "gateRank",
+        "type": "uint8"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "hunter",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "gateId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "usedBrokenStone",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes[]",
+        "name": "gateSignatures",
+        "type": "bytes[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "stoneIds",
+        "type": "uint256[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "GateCleared",
+    "type": "event"
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "seasonId"
+      },
+      {
+        "type": "uint8",
+        "indexed": true,
+        "internalType": "enum BaseStorage.RankType",
+        "name": "gateRank"
+      },
+      {
+        "type": "address",
+        "indexed": true,
+        "internalType": "address",
+        "name": "hunter"
+      },
+      {
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "gateId"
+      },
+      {
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "startBlock"
+      },
+      {
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "endBlock"
+      }
+    ],
+    "name": "GateCreated"
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "seasonId"
+      },
+      {
+        "type": "uint8",
+        "indexed": true,
+        "internalType": "enum BaseStorage.RankType",
+        "name": "gateRank"
+      },
+      {
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "gateId"
+      },
+      {
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "price"
+      },
+      {
+        "type": "address[]",
+        "indexed": false,
+        "internalType": "address[]",
+        "name": "distributedAccounts"
+      },
+      {
+        "type": "uint256[]",
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "distributedAmounts"
+      },
+      {
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp"
+      }
+    ],
+    "name": "GateFeeDistributed"
+  },
+  {
+    "type": "function",
+    "inputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": "_gateId"
+      },
+      {
+        "type": "bytes[]",
+        "internalType": "bytes[]",
+        "name": "_gateSignatures"
+      }
+    ],
+    "name": "claimClearGate",
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "inputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": "_seasonId"
+      },
+      {
+        "type": "uint8",
+        "internalType": "enum BaseStorage.RankType",
+        "name": "_gateRank"
+      }
+    ],
+    "name": "enterToGate",
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "inputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": "_gateId"
+      }
+    ],
+    "name": "getGateById",
+    "outputs": [
+      {
+        "type": "tuple",
+        "components": [
+          {
+            "type": "uint64",
+            "internalType": "uint64",
+            "name": "id"
+          },
+          {
+            "type": "uint64",
+            "internalType": "uint64",
+            "name": "seasonId"
+          },
+          {
+            "type": "uint32",
+            "internalType": "uint32",
+            "name": "startBlock"
+          },
+          {
+            "type": "uint32",
+            "internalType": "uint32",
+            "name": "endBlock"
+          },
+          {
+            "type": "uint32",
+            "internalType": "uint32",
+            "name": "usedBrokenStone"
+          },
+          {
+            "type": "bool",
+            "internalType": "bool",
+            "name": "claimed"
+          },
+          {
+            "type": "uint8",
+            "internalType": "enum BaseStorage.RankType",
+            "name": "gateRank"
+          },
+          {
+            "type": "address",
+            "internalType": "address",
+            "name": "hunter"
+          }
+        ],
+        "internalType": "struct DungeonGateBase.Gate",
+        "name": ""
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "inputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": "_seasonId"
+      },
+      {
+        "type": "address",
+        "internalType": "address",
+        "name": "_hunter"
+      }
+    ],
+    "name": "getGateCountOfSeason",
+    "outputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": ""
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "inputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": "_seasonId"
+      },
+      {
+        "type": "address[]",
+        "internalType": "address[]",
+        "name": "_hunters"
+      }
+    ],
+    "name": "getGateCountOfSeasonBatch",
+    "outputs": [
+      {
+        "type": "uint256[]",
+        "internalType": "uint256[]",
+        "name": ""
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "inputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": "_gateId"
+      }
+    ],
+    "name": "getGateHunter",
+    "outputs": [
+      {
+        "type": "address",
+        "internalType": "address",
+        "name": ""
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "inputs": [
+      {
+        "type": "address",
+        "internalType": "address",
+        "name": "_hunter"
+      }
+    ],
+    "name": "getGateIdOfHunterSlot",
+    "outputs": [
+      {
+        "type": "uint256[]",
+        "internalType": "uint256[]",
+        "name": ""
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "inputs": [
+      {
+        "type": "address",
+        "internalType": "address",
+        "name": "_hunter"
+      }
+    ],
+    "name": "getGateOfHunterSlot",
+    "outputs": [
+      {
+        "type": "tuple[]",
+        "components": [
+          {
+            "type": "uint64",
+            "internalType": "uint64",
+            "name": "id"
+          },
+          {
+            "type": "uint64",
+            "internalType": "uint64",
+            "name": "seasonId"
+          },
+          {
+            "type": "uint32",
+            "internalType": "uint32",
+            "name": "startBlock"
+          },
+          {
+            "type": "uint32",
+            "internalType": "uint32",
+            "name": "endBlock"
+          },
+          {
+            "type": "uint32",
+            "internalType": "uint32",
+            "name": "usedBrokenStone"
+          },
+          {
+            "type": "bool",
+            "internalType": "bool",
+            "name": "claimed"
+          },
+          {
+            "type": "uint8",
+            "internalType": "enum BaseStorage.RankType",
+            "name": "gateRank"
+          },
+          {
+            "type": "address",
+            "internalType": "address",
+            "name": "hunter"
+          }
+        ],
+        "internalType": "struct DungeonGateBase.Gate[]",
+        "name": "gateOfHunterSlot"
+      },
+      {
+        "type": "uint256[]",
+        "internalType": "uint256[]",
+        "name": "requiredBrokenStones"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "inputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": "_gateId"
+      }
+    ],
+    "name": "getGateRemainingBlock",
+    "outputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": ""
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "inputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": "_seasonId"
+      },
+      {
+        "type": "address",
+        "internalType": "address",
+        "name": "_hunter"
+      }
+    ],
+    "name": "getHunterSlot",
+    "outputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": "totalSlot"
+      },
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": "usingSlot"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "inputs": [
+      {
+        "type": "address",
+        "internalType": "address",
+        "name": "_hunter"
+      }
+    ],
+    "name": "getHunterUsingSlot",
+    "outputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": ""
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "inputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": "_gateId"
+      }
+    ],
+    "name": "getRequiredBrokenStoneForClear",
+    "outputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": ""
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "inputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": "_gateId"
+      }
+    ],
+    "name": "isClaimedGate",
+    "outputs": [
+      {
+        "type": "bool",
+        "internalType": "bool",
+        "name": ""
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "inputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": "_gateId"
+      }
+    ],
+    "name": "isClearGate",
+    "outputs": [
+      {
+        "type": "bool",
+        "internalType": "bool",
+        "name": ""
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "inputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": "_gateId"
+      }
+    ],
+    "name": "isExistGateById",
+    "outputs": [
+      {
+        "type": "bool",
+        "internalType": "bool",
+        "name": ""
+      }
+    ],
+    "stateMutability": "view"
+  }
+]

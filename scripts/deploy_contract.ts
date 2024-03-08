@@ -100,22 +100,11 @@ async function main() {
   }
 
   /* DEPLOY SEASON
-     REQUIRE : _projectContract, _monsterFactoryContract, _nomalMonsterCollectionId, _shadowMonsterCollectionId */
-  const SLSeason = isTesting
-    ? await ethers.getContractFactory("SLSeasonTest")
-    : await ethers.getContractFactory("SLSeason");
-  const season = await upgrades.deployProxy(
-    SLSeason,
-    [
-      project.address,
-      monsterFactory.address,
-      CollectionId.Monster,
-      CollectionId.ShadowArmy,
-    ],
-    {
-      kind: "uups",
-    }
-  );
+     REQUIRE : _projectContract */
+  const SLSeason = await ethers.getContractFactory("SLSeason");
+  const season = await upgrades.deployProxy(SLSeason, [project.address], {
+    kind: "uups",
+  });
   await season.deployed();
   console.log(`💎 Season deployed to: ${season.address}`);
 
@@ -318,7 +307,7 @@ async function main() {
    **** DEPLOY COLLECTION ****
    ***************************/
 
-  /************************ APPRPVOAL CONTROLLER ************************/
+  /************************ APPROVAL CONTROLLER ************************/
 
   /* DEPLOY APPROVAL CONTROLLER
      REQUIRE : _projectContract, _contracts(seasonContract, dungeonGateContract, systemContract) */
@@ -386,7 +375,7 @@ async function main() {
   /************************ ESSENCE STONE COLLECTION ID 2 ************************/
 
   /* DEPLOY ESSENCE STONE COLLECTION
-     REQUIRE : _projectContract, _approvalControllerContract, _controllers(systemContract), _baseTokenURI */
+     REQUIRE : _projectContract, _approvalControllerContract, _controllers(systemContract, dungeonGateContract, shopContract), _baseTokenURI */
   const EssenceStone = isTesting
     ? await ethers.getContractFactory("SLTestEssenceStone")
     : await ethers.getContractFactory("SLEssenceStone");
@@ -395,7 +384,7 @@ async function main() {
     [
       project.address,
       approvalController.address,
-      [system.address],
+      [system.address, dungeonGate.address, shop.address],
       "baseTokenURI",
     ],
     {

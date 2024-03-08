@@ -1,0 +1,49 @@
+[
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "OnlyOperator"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "OnlyOperatorMaster"
+  },
+  {
+    "type": "error",
+    "inputs": [],
+    "name": "RandomSignatureVerifyFailed"
+  },
+  {
+    "type": "function",
+    "inputs": [
+      {
+        "type": "address",
+        "internalType": "address",
+        "name": "_hunter"
+      }
+    ],
+    "name": "getNonce",
+    "outputs": [
+      {
+        "type": "uint256",
+        "internalType": "uint256",
+        "name": ""
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "inputs": [],
+    "name": "getRandomSigner",
+    "outputs": [
+      {
+        "type": "address",
+        "internalType": "address",
+        "name": ""
+      }
+    ],
+    "stateMutability": "view"
+  }
+]

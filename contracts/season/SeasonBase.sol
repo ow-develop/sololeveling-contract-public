@@ -18,13 +18,6 @@ abstract contract SeasonBase is
 {
     CountersUpgradeable.Counter internal seasonIds;
 
-    // monsterFactory contract
-    ISLMonsterFactory internal monsterFactoryContract;
-
-    // collectionId
-    uint256 internal normalMonsterCollectionId;
-    uint256 internal shadowMonsterCollectionId;
-
     /*
      *  Struct
      */
@@ -42,20 +35,4 @@ abstract contract SeasonBase is
      */
     /// @notice seasonId to Season
     mapping(uint256 => Season) internal seasons;
-
-    /// @notice RankType to required normal monster count for hunter rankUp
-    mapping(RankType => uint256) internal requiredNormalMonsterForRankUp; // E-A
-
-    /// @notice RankType to required shadow monster count for hunter rankUp
-    mapping(RankType => uint256) internal requiredShadowMonsterForRankUp; // B-A
-
-    /*
-     *  Event
-     */
-    event HunterRankUp(
-        uint256 indexed seasonId,
-        address indexed hunter,
-        RankType indexed rankType,
-        uint256 timestamp
-    );
 }
